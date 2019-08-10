@@ -1,0 +1,130 @@
+<!DOCTYPE HTML>
+{% load static %}
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <title>早餐吃麥片好耶</title>
+    <link rel="stylesheet" href="{% static 'backstage/3rd/bootstrap-4.3.1-dist/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'backstage/css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'backstage/3rd/fontawesome-free-5.10.1-web/css/all.css' %}">
+  </head>
+  <body> 
+    <nav class="navbar navbar-expand-lg text-white bg-dark justify-content-center">
+      <span class="navbar-brand">Urmart</span>
+    </nav>
+    <div class="container" style="padding-bottom: 30px;">
+      <form class="form-row" id="new-order-form" style="margin: 50px 0 50px 0;" >
+        <div class="form-group col-3">
+          <select id="product_id" class="form-control">
+            <option value="" selected disabled hidden>Select Product</option>
+            {% for p in product_list %}
+            <option value="{{ p.id }}">Product_id: {{ p.product_id }}</option>
+            {% endfor %}    
+          </select>
+        </div>
+        <div class="form-group col-2">
+          <input type="number" id="qty" class="form-control" placeholder="數量" value=""/> 
+        </div>
+        <div class="form-group col-1">
+          <button type="submit" class="btn" style="font-size: 24px; padding: 0">
+            <i class="fas fa-plus-circle" id="new-order"></i>
+          </button>
+        </div>
+        <div class="form-group col-4">
+          <input class="form-control" id="customer_id" placeholder="Customer ID" value="" required/>
+          <div class="form-check">
+            <input class="form-check-input" id="vip" type="checkbox">
+            <label class="form-check-label">是否為VIP身分</label>
+          </div>
+        </div>
+      </form>
+
+      <h4 class="col-12">商品列表</h4>
+      {% if product_list %}
+      <div class="table-wrapper" style="overflow: scroll; margin-bottom: 20px; padding: 0 15px;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col" class="text-center border" style="width: 120px; min-width: 120px;">Product ID</th>
+            <th scope="col" class="text-center border" style="width: 120px; min-width: 120px;">stock_pcs</th>
+            <th scope="col" class="text-center border" style="width: 120px; min-width: 120px;" >price</th>
+            <th scope="col" class="text-center border" style="width: 120px; min-width: 120px;">shop_id</th>
+            <th scope="col" class="text-center border" style="width: 120px; min-width: 120px;">vip</th>
+            <th scope="col" class="text-center border-0" style="width: 100px; max-width: 100px; min-width: 100px;">&nbsp</th>
+        </thead>
+        <tbody>
+        {% for p in product_list %}
+          <tr>
+            <td class="text-center border">{{ p.product_id }}</td>
+            <td class="text-center border">{{ p.stock_pcs }}</td>
+            <td class="text-center border">{{ p.price }}</td>
+            <td class="text-center border">{{ p.shop_id }}</td>
+            <td class="text-center border">{% if p.vip %}Y{% else %}N{% endif %}</td>
+            <td class="text-center border-0">&nbsp</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      {% else %}
+        <div class="col-12">無產品列表</div>
+      {% endif %}
+
+      <h4 class="col-12">訂單紀錄</h4>
+      {% if order_list %}
+      <div class="table-wrapper" style="overflow: scroll; margin-bottom: 20px; padding: 0 15px;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col" class="text-center border" width='100' style="width: 96px; min-width: 90px">Order ID</th>
+            <th scope="col" class="text-center border" style="width: 120px; min-width: 120px;">product_id</th>
+            <th scope="col" class="text-center border" style="width: 96px; min-width: 90px;">qty</th>
+            <th scope="col" class="text-center border" style="width: 96px; min-width: 90px;">price</th>
+            <th scope="col" class="text-center border" style="width: 96px; min-width: 90px;">shop_id</th>
+            <th scope="col" class="text-center border" style="width: 120px; min-width: 120px;">customer_id</th>
+            <th scope="col" class="text-center border-0" style="width: 100px; max-width: 100px; min-width: 100px;">&nbsp</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for o in order_list %}
+          <tr>
+            <td class="text-center border">{{ o.id }}</td>
+            <td class="text-center border">{{ o.product_id }}</td>
+            <td class="text-center border">{{ o.qty }}</td>
+            <td class="text-center border">{{ o.price }}</td>
+            <td class="text-center border">{{ o.shop_id }}</td>
+            <td class="text-center border">{{ o.customer_id }}</td>
+            <td class="text-center border-0">&nbsp</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      {% else %}
+        <div class="col-12">無訂單紀錄</div>
+      {% endif %}
+
+      <div class="top3-wrapper" style="padding: 0 15px;">
+        <div class="row">
+        <div>TOP3</div>
+        </div>
+      </div>
+    <div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+      $(document).ready(function() {
+        $("#new-order-form").submit(function(e) {
+          $.ajax({
+            type: "POST",
+            url: "{% url 'backstage:new_order' %}",
+            data: $(this).serialize(),
+            success: function(data) {
+              console.log(data);
+            }
+          });
+          e.preventDefault();
+        });
+      }); 
+    </script>
+  </body>
+</html>
