@@ -3,19 +3,60 @@
 <html>
   <head>
     <meta charset='utf-8'>
-    <title>早餐吃麥片好耶</title>
+    <title>好啊早餐就吃麥片</title>
     <link rel="stylesheet" href="{% static 'backstage/3rd/bootstrap-4.3.1-dist/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'backstage/css/main.css' %}">
     <link rel="stylesheet" href="{% static 'backstage/3rd/fontawesome-free-5.10.1-web/css/all.css' %}">
+    <style>
+      input[type=number]::-webkit-inner-spin-button, 
+      input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+      }
+
+      input[type='number'] {
+        -moz-appearance:textfield;
+      }
+
+      .alert {
+        margin-bottom: 0;
+        position: fixed;
+        width: 100%;
+        z-index: -1;
+        transform: translate(0, -100%);
+        transition: transform 0.1s linear, opacity 0.3s ease-in, z-index, .2s;
+        opacity: 0;
+      }
+      .alert.show {
+        opacity: 1;
+        transform: translate(0, 0);
+        z-index: 8;
+  }
+
+    </style>
   </head>
   <body> 
     <nav class="navbar navbar-expand-lg text-white bg-dark justify-content-center">
       <span class="navbar-brand">Urmart</span>
     </nav>
+
+    <!-- Alerts -->
+    <div id="success-alert" class="alert alert-success alert-dismissible fade" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div id="danger-alert" class="alert alert-danger alert-dismissible fade" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+
+    <!-- Container -->
     <div class="container" style="padding-bottom: 30px;">
-      <form class="form-row" id="new-order-form" style="margin: 50px 0 50px 0;" >
+      <form class="form-row" id="new-order-form" style="margin: 60px 0 50px 0;" >
+        {% csrf_token %}
         <div class="form-group col-3">
-          <select id="product_id" class="form-control">
+          <select name="product_id" class="form-control">
             <option value="" selected disabled hidden>Select Product</option>
             {% for p in product_list %}
             <option value="{{ p.id }}">Product_id: {{ p.product_id }}</option>
@@ -23,7 +64,7 @@
           </select>
         </div>
         <div class="form-group col-2">
-          <input type="number" id="qty" class="form-control" placeholder="數量" value=""/> 
+          <input type="number" name="qty" class="form-control" placeholder="數量" value=""/> 
         </div>
         <div class="form-group col-1">
           <button type="submit" class="btn" style="font-size: 24px; padding: 0">
@@ -31,9 +72,9 @@
           </button>
         </div>
         <div class="form-group col-4">
-          <input class="form-control" id="customer_id" placeholder="Customer ID" value="" required/>
+          <input class="form-control" name="customer_id" placeholder="Customer ID" value="" required/>
           <div class="form-check">
-            <input class="form-check-input" id="vip" type="checkbox">
+            <input class="form-check-input" name="vip" type="checkbox">
             <label class="form-check-label">是否為VIP身分</label>
           </div>
         </div>
@@ -41,7 +82,7 @@
 
       <h4 class="col-12">商品列表</h4>
       {% if product_list %}
-      <div class="table-wrapper" style="overflow: scroll; margin-bottom: 20px; padding: 0 15px;">
+      <div id="product-table" class="table-wrapper" style="overflow: scroll; margin-bottom: 20px; padding: 0 15px;">
       <table class="table">
         <thead>
           <tr>
@@ -56,11 +97,11 @@
         {% for p in product_list %}
           <tr>
             <td class="text-center border">{{ p.product_id }}</td>
-            <td class="text-center border">{{ p.stock_pcs }}</td>
+            <td class="text-center border" data-target="{{ p.product_id }}" data-name="stock_pcs">{{ p.stock_pcs }}</td>
             <td class="text-center border">{{ p.price }}</td>
             <td class="text-center border">{{ p.shop_id }}</td>
-            <td class="text-center border">{% if p.vip %}Y{% else %}N{% endif %}</td>
-            <td class="text-center border-0">&nbsp</td>
+            <td class="text-center border">{% if p.vip %}<i class="fas fa-check-circle"></i>{% endif %}</td>
+            <td class="text-center border-0" data-target="{{ p.product_id }}" data-name="note">&nbsp</td>
           </tr>
         {% endfor %}
         </tbody>
@@ -71,9 +112,8 @@
       {% endif %}
 
       <h4 class="col-12">訂單紀錄</h4>
-      {% if order_list %}
       <div class="table-wrapper" style="overflow: scroll; margin-bottom: 20px; padding: 0 15px;">
-      <table class="table">
+      <table id="order-table" class="table">
         <thead>
           <tr>
             <th scope="col" class="text-center border" width='100' style="width: 96px; min-width: 90px">Order ID</th>
@@ -87,43 +127,153 @@
         </thead>
         <tbody>
         {% for o in order_list %}
-          <tr>
+          <tr data-target={{ o.id }}>
             <td class="text-center border">{{ o.id }}</td>
             <td class="text-center border">{{ o.product_id }}</td>
             <td class="text-center border">{{ o.qty }}</td>
             <td class="text-center border">{{ o.price }}</td>
             <td class="text-center border">{{ o.shop_id }}</td>
             <td class="text-center border">{{ o.customer_id }}</td>
-            <td class="text-center border-0">&nbsp</td>
+            <td class="text-left border-0">
+              <button type="button" data-target="{{ o.id }}" class="btn" onclick="deleteOrder(event)" style="font-size: 24px; padding: 0; color: #d82727;">
+                <i class="fas fa-minus-circle"></i>
+              </button>
+            </td>
           </tr>
         {% endfor %}
         </tbody>
       </table>
       </div>
-      {% else %}
-        <div class="col-12">無訂單紀錄</div>
-      {% endif %}
 
+      <h4 class="col-12">TOP3</h4>
       <div class="top3-wrapper" style="padding: 0 15px;">
-        <div class="row">
-        <div>TOP3</div>
+      {% for i in top3 %}
+        <div class="badge badge-info">
+          Product_id: {{ i.product_id }}
         </div>
+      {% endfor %}
       </div>
     <div>
+    <!-- End container -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="{% static 'backstage/3rd/bootstrap-4.3.1-dist/js/bootstrap.min.js' %}"></script>
     <script>
+      function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+      }
+      
+      function showSuccessAlert(text) {
+        hideAllAlert();
+
+        $("#success-alert").html(`${ text } <button type='button' class='close' aria-label='Close' onclick="hideAllAlert()"><span aria-hidden='true'>&times;</span></button>`);
+        setTimeout(function() {
+          $("#success-alert").addClass('show');
+          setAlertPosition();
+        }, 200);
+      }
+
+      function showDangerAlert(text) {
+        hideAllAlert();
+        $("#danger-alert").html(`${ text } <button type='button' class='close' aria-label='Close' onclick="hideAllAlert()"><span aria-hidden='true'>&times;</span></button>`);
+        setTimeout(function() {
+          $("#danger-alert").addClass('show');
+          setAlertPosition();
+        }, 200);
+      }
+
+      function hideAllAlert() {
+        $(".alert").removeClass('show');
+      }
+ 
+      function setAlertPosition() {
+        var scrollTop = $(window).scrollTop();
+        if (scrollTop <= $('.navbar').height()) {
+          $('.alert.show').css('top', $('.navbar').outerHeight() - scrollTop);
+        }
+        else {
+          $('.alert.show').css('top', 0);
+        }
+      }
+
+      function deleteOrder(event) {
+        let target = event.currentTarget.getAttribute('data-target');
+
+        $.ajax({
+          type: "DELETE",
+          url: "{%url 'backstage:delete_order' id='0' %}".replace('0', target),
+          data: $(this).serialize(),
+          success: function(data) {
+            console.log(data);
+            let $stock = $(`#product-table [data-target='${ data.data.product.product_id }'][data-name='stock_pcs']`);
+            let $note = $(`#product-table [data-target='${ data.data.product.product_id }'][data-name='note']`);
+ 
+            $(`tr[data-target='${ target }']`).remove()  // Remove the order row in table
+
+            showSuccessAlert(`訂單刪除成功！ (id: ${ target })`);  // Show success alert
+
+            if ($stock.text() === '0' || $stock.text() === 0) {
+              $note.text('商品進貨');
+            }
+
+            $stock.text(data.data.product.stock_pcs)  // Update product stock
+          },
+        });
+      };
+
       $(document).ready(function() {
+        var csrftoken = $("[name=csrfmiddlewaretoken]").val();
+        $.ajaxSetup({
+          beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          }
+        });
+   
+        // Set event listener to control alert
+        $(window).scroll(setAlertPosition);
+
+        // Ajax to create a new order
         $("#new-order-form").submit(function(e) {
           $.ajax({
             type: "POST",
-            url: "{% url 'backstage:new_order' %}",
+            url: "{%url 'backstage:new_order' %}",
             data: $(this).serialize(),
             success: function(data) {
               console.log(data);
+              if (data.ret == 'ok') {
+                let $stock = $(`#product-table [data-target='${ data.data.product.product_id }'][data-name='stock_pcs']`);
+                let $note = $(`#product-table [data-target='${ data.data.product.product_id }'][data-name='note']`);
+
+                showSuccessAlert('訂單建立成功！');
+                $stock.text(data.data.product.stock_pcs)
+                $('#order-table tr:last')
+                  .after(
+                    `<tr data-target='${ data.data.order.id }'>
+                    <td class="text-center border">${ data.data.order.id }</td>
+                    <td class="text-center border">${ data.data.order.product_id }</td>
+                    <td class="text-center border">${ data.data.order.qty }</td>
+                    <td class="text-center border">${ data.data.order.price }</td>
+                    <td class="text-center border">${ data.data.order.shop_id }</td>
+                    <td class="text-center border">${ data.data.order.customer_id }</td>
+                    <td class="text-left border-0">
+                      <button type="button" data-target='${ data.data.order.id }' class="btn delete-order" onclick="deleteOrder(event)" style="font-size: 24px; padding: 0; color: #d82727;">
+                        <i class="fas fa-minus-circle"></i>
+                      </button>
+                    </td>
+                  </tr>`)
+
+                $note.text('')
+              }
+              else {
+                showDangerAlert(data.msg);
+              }
             }
           });
           e.preventDefault();
         });
+
       }); 
     </script>
   </body>
