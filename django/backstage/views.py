@@ -25,7 +25,6 @@ OUT = {
 def validate_vip(view_func): # Replace the passed-in function with decorator when initialing
     def decorator(request, *args, **kwargs):
         out = copy.deepcopy(OUT)
-        print(request.POST)
 
         try:
             product = Product.objects.get(id=request.POST.get('product_id'))
@@ -49,7 +48,6 @@ def validate_vip(view_func): # Replace the passed-in function with decorator whe
 def check_stock(view_func):
     def decorator(request, *args, **kwargs):
         out = copy.deepcopy(OUT)
-        print(request.POST)
         
         # Check if product_id is correct
         try:
@@ -82,9 +80,6 @@ def home(request):
     product_list = Product.objects.all()
     order_list = Order.objects.all()
     top3 = Order.objects.annotate(sum=Sum('qty')).order_by('-sum')[:3]
-
-
-    
 
     return render(request, 'index.html', {'product_list': product_list,
                                           'order_list': order_list,
