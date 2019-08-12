@@ -79,7 +79,7 @@ def check_stock(view_func):
 def home(request):
     product_list = Product.objects.all()
     order_list = Order.objects.all()
-    top3 = Order.objects.annotate(sum=Sum('qty')).order_by('-sum')[:3]
+    top3 = Order.objects.values('product_id').annotate(sum=Sum('qty')).order_by('-sum')[:3]
 
     return render(request, 'index.html', {'product_list': product_list,
                                           'order_list': order_list,
